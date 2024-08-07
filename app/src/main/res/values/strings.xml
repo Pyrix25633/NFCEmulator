@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">NFC-Emulator</string>
+    <string name="cardNameHint">Card Name</string>
+    <string name="newCardButton">New Card</string>
+</resources>
