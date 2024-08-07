@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">NFC-Emulator</string>
-    <string name="cardNameHint">Card Name</string>
-    <string name="newCardButton">New Card</string>
+    <string name="card_name_edit_text_hint">Card Name</string>
+    <string name="create_button">Create</string>
+    <string name="new_card_text_view">New Card</string>
+    <string name="cards_text_view">Cards</string>
+    <string name="delete_button">Delete</string>
+    <string name="emulate_button">Emulate</string>
 </resources>

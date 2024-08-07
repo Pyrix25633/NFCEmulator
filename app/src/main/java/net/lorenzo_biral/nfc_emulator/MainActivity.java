@@ -8,8 +8,6 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -21,8 +19,10 @@ import net.lorenzo_biral.nfc_emulator.database.entity.Card;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,32 +40,57 @@ public class MainActivity extends AppCompatActivity {
         NfcDatabase db = Room.databaseBuilder(getApplicationContext(),
                 NfcDatabase.class, "card").build();
 
-        EditText cardNameText = findViewById(R.id.cardNameText);
-        Button newCardButton = findViewById(R.id.newCardButton);
-        Spinner cardList = findViewById(R.id.cardList);
-        List<Card> cards = new ArrayList<>();
-        ArrayAdapter<Card> cardListAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, cards);
-        cardList.setAdapter(cardListAdapter);
-        new Thread(() -> cardListAdapter.addAll(db.cardDao().getAll())).start();
+        EditText cardNameEditText = findViewById(R.id.cardNameText);
+        Button createButton = findViewById(R.id.createButton);
+        Spinner cardSpinner = findViewById(R.id.cardList);
+        Button deleteButton = findViewById(R.id.deleteButton);
+        Button emulateButton = findViewById(R.id.emulateButton);
 
-        newCardButton.setOnClickListener((View v) -> {
-            new Thread(() -> {
-                Card card = new Card(cardNameText.getText().toString(), "testText");
-                db.cardDao().insertAll(card);
-                runOnUiThread(() -> {
-                    update(cards, card);
-                });
-            }).start();
-        });
+        setCurrentDateAsText(cardNameEditText);
+
+        List<Card> cards = new ArrayList<>();
+        ArrayAdapter<Card> cardSpinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, cards);
+        cardSpinner.setAdapter(cardSpinnerAdapter);
+        new Thread(() -> cardSpinnerAdapter.addAll(db.cardDao().getAll())).start();
+
+        createButton.setOnClickListener((View v) -> new Thread(() -> {
+            Card card = new Card(cardNameEditText.getText().toString(), "testText");
+            db.cardDao().insertAll(card);
+            runOnUiThread(() -> {
+                addOrUpdate(cards, cardSpinnerAdapter, card);
+                setCurrentDateAsText(cardNameEditText);
+            });
+        }).start());
+
+        deleteButton.setOnClickListener((View v) -> new Thread(() -> {
+            if(cards.isEmpty()) return;
+            Card card = (Card)cardSpinner.getSelectedItem();
+            System.out.println(card);
+            db.cardDao().delete(card);
+            runOnUiThread(() -> cardSpinnerAdapter.remove(card));
+        }).start());
+
+        emulateButton.setOnClickListener((View v) -> System.out.println("emulate"));
     }
 
-    public static void update(@NotNull List<Card> cards, @NotNull Card card) {
+    public static void setCurrentDateAsText(@NotNull EditText cardNameEditText) {
+        LocalDateTime dateTime = LocalDateTime.now();
+        String month = dateTime.getMonth().name();
+        month = month.charAt(0) + month.substring(1, 3).toLowerCase();
+        cardNameEditText.setText(String.format(Locale.ENGLISH, "Card %s %d %d %d:%d",
+                month, dateTime.getDayOfMonth(), dateTime.getYear(),
+                dateTime.getHour(), dateTime.getMinute()));
+    }
+
+    public static void addOrUpdate(@NotNull List<Card> cards,
+                                   @NotNull ArrayAdapter<Card> cardSpinnerAdapter,
+                                   @NotNull Card card) {
         for(Card c : cards) {
             if(c.name.equals(card.name)) {
                 c.content = card.content;
                 return;
             }
         }
-        cards.add(card);
+        cardSpinnerAdapter.add(card);
     }
 }
