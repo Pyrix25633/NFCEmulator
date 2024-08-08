@@ -1,6 +1,9 @@
 package net.lorenzo_biral.nfc_emulator;
 
+import android.content.Context;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -37,6 +40,8 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
+        Vibrator vibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+
         NfcDatabase db = Room.databaseBuilder(getApplicationContext(),
                 NfcDatabase.class, "card").build();
 
@@ -59,6 +64,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 addOrUpdate(cards, cardSpinnerAdapter, card);
                 setCurrentDateAsText(cardNameEditText);
+                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK));
             });
         }).start());
 
@@ -67,7 +73,10 @@ public class MainActivity extends AppCompatActivity {
             Card card = (Card)cardSpinner.getSelectedItem();
             System.out.println(card);
             db.cardDao().delete(card);
-            runOnUiThread(() -> cardSpinnerAdapter.remove(card));
+            runOnUiThread(() -> {
+                cardSpinnerAdapter.remove(card);
+                vibrator.vibrate(VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK));
+            });
         }).start());
 
         emulateButton.setOnClickListener((View v) -> System.out.println("emulate"));
